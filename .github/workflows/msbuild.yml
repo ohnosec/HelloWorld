@@ -37,7 +37,7 @@ jobs:
         # name: HelloWorld.windows.zip
         # path: output/HelloWorld.windows.zip
         
-    - name: Test composite
+    - name: Windows build
       uses: ./.github/actions/windowsbuild
       with:
         solution: mysolutionname
