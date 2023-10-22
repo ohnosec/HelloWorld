@@ -19,11 +19,11 @@ jobs:
 
     - name: Build 64bit
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64" .
+      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=bin\x64" .
 
     - name: Build 32bit
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86" .
+      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=bin\x86" .
 
     - name: List files in the repository
       run: ls -r ${{ github.workspace }}
