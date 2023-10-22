@@ -19,11 +19,11 @@ jobs:
 
     # - name: Build 64bit
       # working-directory: ${{env.GITHUB_WORKSPACE}}
-      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=output/64bit" .
+      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=output/64bit/" .
 
     # - name: Build 32bit
       # working-directory: ${{env.GITHUB_WORKSPACE}}
-      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=output/32bit" .
+      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=output/32bit/" .
 
     # - name: Make zip 
       # run: Compress-Archive "output/*" "output/HelloWorld.windows.zip"
@@ -40,4 +40,5 @@ jobs:
     - name: Windows build
       uses: ./.github/actions/windowsbuild
       with:
-        solution: mysolutionname
+        solution-filename: HelloWorld.sln
+        zip-filename: HelloWorld.windows.zip
