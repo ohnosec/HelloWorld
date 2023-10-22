@@ -7,4 +7,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.solution }}
+  - name: Show something  
+    shell: bash
+    run: echo Hello ${{ inputs.solution }}
