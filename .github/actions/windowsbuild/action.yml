@@ -1,11 +1,14 @@
-name: 'Test Action'
-description: 'Testing composite action'
+name: Test Action
+description: Testing composite action
 inputs:
-  solution:
-    description: 'Name of solution'
+  solution-filename:
+    description: Solution file name
+    required: true
+  zip-filename:
+    description: Zip file name
     required: true
 runs:
-  using: "composite"
+  using: composite
   steps:
   # - shell: pwsh
     # run: echo Hello ${{ inputs.solution }}
@@ -16,19 +19,19 @@ runs:
   - name: Build 64bit  
     shell: pwsh
     working-directory: ${{env.GITHUB_WORKSPACE}}
-    run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=output/64bit" .
+    run: msbuild /m "/p:Configuration=Release;Platform=x64;OutDir=output/64bit/" "${{ inputs.solution-filename }}"
 
   - name: Build 32bit
     shell: pwsh
     working-directory: ${{env.GITHUB_WORKSPACE}}
-    run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=output/32bit" .
+    run: msbuild /m "/p:Configuration=Release;Platform=x86;OutDir=output/32bit/" "${{ inputs.solution-filename }}"
 
   - name: Make zip 
     shell: pwsh
-    run: Compress-Archive "output/*" "output/${{ inputs.solution }}.windows.zip"
+    run: Compress-Archive "output/*" "output/windows.zip"
   
   - name: Upload zip
     uses: actions/upload-artifact@v3
     with:
-      name: ${{ inputs.solution }}.windows.zip
-      path: output/${{ inputs.solution }}.windows.zip
+      name: ${{ inputs.zip-filename }}
+      path: output/windows.zip
