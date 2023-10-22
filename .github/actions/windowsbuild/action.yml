@@ -8,5 +8,5 @@ runs:
   using: "composite"
   steps:
   - name: Show something  
-    # shell: bash
+    shell: pwsh
     run: echo Hello ${{ inputs.solution }}
