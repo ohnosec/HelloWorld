@@ -1,0 +1,10 @@
+name: 'Test Action'
+description: 'Testing composite action'
+inputs:
+  solution:
+    description: 'Name of solution'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.solution }}
