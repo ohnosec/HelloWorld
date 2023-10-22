@@ -34,5 +34,5 @@ jobs:
     - name: Upload zip
       uses: actions/upload-artifact@v3
       with:
-        name: zmakebas_windows
+        name: HelloWorld.windows.zip
         path: output/HelloWorld.windows.zip
