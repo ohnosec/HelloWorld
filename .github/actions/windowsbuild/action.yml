@@ -7,6 +7,28 @@ inputs:
 runs:
   using: "composite"
   steps:
-  - name: Show something  
+  # - shell: pwsh
+    # run: echo Hello ${{ inputs.solution }}
+
+  - name: Add MSBuild to PATH
+    uses: microsoft/setup-msbuild@v1.0.2
+
+  - name: Build 64bit  
     shell: pwsh
-    run: echo Hello ${{ inputs.solution }}
+    working-directory: ${{env.GITHUB_WORKSPACE}}
+    run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=output/64bit" .
+
+  - name: Build 32bit
+    shell: pwsh
+    working-directory: ${{env.GITHUB_WORKSPACE}}
+    run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=output/32bit" .
+
+  - name: Make zip 
+    shell: pwsh
+    run: Compress-Archive "output/*" "output/${{ inputs.solution }}.windows.zip"
+  
+  - name: Upload zip
+    uses: actions/upload-artifact@v3
+    with:
+      name: ${{ inputs.solution }}.windows.zip
+      path: output/${{ inputs.solution }}.windows.zip
