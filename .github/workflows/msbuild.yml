@@ -3,7 +3,6 @@ on: [push]
 
 env:
   BUILD_CONFIGURATION: Release
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 permissions:
   contents: read
@@ -13,30 +12,27 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    # - name: Add MSBuild to PATH
-      # uses: microsoft/setup-msbuild@v1.0.2
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
 
-    # - name: Build 64bit
-      # working-directory: ${{env.GITHUB_WORKSPACE}}
-      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=bin/x64" .
+    - name: Build 64bit
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x64;OutDir=bin/64bit" .
 
-    # - name: Build 32bit
-      # working-directory: ${{env.GITHUB_WORKSPACE}}
-      # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=bin/x86" .
+    - name: Build 32bit
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=bin/32bit" .
 
-    # - name: Make zip 
-      # run: Compress-Archive "bin/x64/HelloWorld.exe" "release/HelloWorld.windows.x64"
-
-    # - name: Make zip 
-      # run: Compress-Archive "bin/x86/HelloWorld.exe" "release/HelloWorld.windows.x86"
+    - name: Make zip 
+      run: Compress-Archive "bin/*" "output/HelloWorld.windows.zip"
       
     - name: List files in the repository
       run: ls -r ${{ github.workspace }}
-      
-    - name: Show variables
-      run: |
-        echo "REF=${{ github.ref_name }}"
-        echo "BRANCH=${{ env.BRANCH_NAME }}"
-
+    
+    - name: Upload zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: zmakebas_windows
+        path: output/HelloWorld.windows.zip
