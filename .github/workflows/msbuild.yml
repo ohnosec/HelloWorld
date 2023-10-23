@@ -41,4 +41,5 @@ jobs:
       uses: ./.github/actions/windowsbuild
       with:
         solution-filename: HelloWorld.sln
-        zip-filename: HelloWorld_windows
+        # zip-filename: HelloWorld_windows
+        zip-filename: HelloWorld
