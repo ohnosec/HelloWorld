@@ -14,7 +14,7 @@ jobs:
     - uses: pguyot/arm-runner-action@v2
       with:
         copy_artifact_path: HelloWorld
-        base_image: raspi_4_bullseye:20230102
+        base_image: raspi_4_bookworm:20230101
         commands: |
           make HelloWorld
           ls -a
