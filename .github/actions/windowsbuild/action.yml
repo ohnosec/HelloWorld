@@ -10,9 +10,6 @@ inputs:
 runs:
   using: composite
   steps:
-  # - shell: pwsh
-    # run: echo Hello ${{ inputs.solution }}
-
   - name: Add MSBuild to PATH
     uses: microsoft/setup-msbuild@v1.0.2
 
@@ -26,12 +23,18 @@ runs:
     working-directory: ${{env.GITHUB_WORKSPACE}}
     run: msbuild /m "/p:Configuration=Release;Platform=x86;OutDir=output/32bit/" "${{ inputs.solution-filename }}"
 
-  - name: Make zip 
-    shell: pwsh
-    run: Compress-Archive "output/*" "output/windows.zip"
+  # - name: Make zip 
+    # shell: pwsh
+    # run: Compress-Archive "output/*" "output/windows.zip"
   
+  # - name: Upload zip
+    # uses: actions/upload-artifact@v3
+    # with:
+      # name: ${{ inputs.zip-filename }}
+      # path: output/windows.zip
+
   - name: Upload zip
     uses: actions/upload-artifact@v3
     with:
       name: ${{ inputs.zip-filename }}
-      path: output/windows.zip
+      path: output
