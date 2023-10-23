@@ -13,6 +13,7 @@ jobs:
     
     - uses: pguyot/arm-runner-action@v2
       with:
+        copy_artifact_path: HelloWorld
         commands: |
           make HelloWorld
           ls -a
