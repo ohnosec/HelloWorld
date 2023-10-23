@@ -1,0 +1,22 @@
+name: PIBuild
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: pguyot/arm-runner-action@v2
+      with:
+        commands: make zmakebas
+    
+    - name: Upload zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: zmakebas_pi
+        path: zmakebas
