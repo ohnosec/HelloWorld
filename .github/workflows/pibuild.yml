@@ -13,10 +13,10 @@ jobs:
     
     - uses: pguyot/arm-runner-action@v2
       with:
-        commands: make zmakebas
+        commands: make HelloWorld
     
     - name: Upload zip
       uses: actions/upload-artifact@v3
       with:
-        name: zmakebas_pi
-        path: zmakebas
+        name: HelloWorld_pi
+        path: HelloWorld
