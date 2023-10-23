@@ -1,8 +1,8 @@
 name: MSBuild
 on: [push]
 
-env:
-  BUILD_CONFIGURATION: Release
+# env:
+  # BUILD_CONFIGURATION: Release
 
 permissions:
   contents: read
@@ -40,6 +40,5 @@ jobs:
     - name: Windows build
       uses: ./.github/actions/windowsbuild
       with:
-        solution-filename: HelloWorld.sln
-        # zip-filename: HelloWorld_windows
-        zip-filename: HelloWorld
+        solution-name: HelloWorld.sln
+        artifact-name: HelloWorld_windows
