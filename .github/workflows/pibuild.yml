@@ -16,7 +16,7 @@ jobs:
         copy_artifact_path: HelloWorld
         cpu: cortex-a53
         cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-        base_image: dietpi:rpi_armv8_bullseye
+        base_image: raspi_4_bullseye:20230102
         # cpu_info: raspberrypi_4b
         # base_image: https://raspi.debian.net/tested/20230102_raspi_4_bullseye.img.xz
         # base_image: raspi_4_bullseye:20230102
