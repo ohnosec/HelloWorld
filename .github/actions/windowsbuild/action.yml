@@ -18,10 +18,10 @@ runs:
     working-directory: ${{env.GITHUB_WORKSPACE}}
     run: msbuild /m "/p:Configuration=Release;Platform=x64;OutDir=output/win64/" "${{ inputs.solution-filename }}"
 
-  - name: Build 32bit
-    shell: pwsh
-    working-directory: ${{env.GITHUB_WORKSPACE}}
-    run: msbuild /m "/p:Configuration=Release;Platform=x86;OutDir=output/win32/" "${{ inputs.solution-filename }}"
+  # - name: Build 32bit
+    # shell: pwsh
+    # working-directory: ${{env.GITHUB_WORKSPACE}}
+    # run: msbuild /m "/p:Configuration=Release;Platform=x86;OutDir=output/win32/" "${{ inputs.solution-filename }}"
 
   - name: Remove debug files
     shell: pwsh
