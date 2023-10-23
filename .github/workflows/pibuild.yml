@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - uses: pguyot/arm-runner-action@latest
+    - uses: pguyot/arm-runner-action@v2
       with:
         copy_artifact_path: HelloWorld
         # cpu_info: raspberrypi_4b
