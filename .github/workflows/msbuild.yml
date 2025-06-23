@@ -45,3 +45,8 @@ jobs:
 
     - name: Build
       run: make
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: release
+        path: HelloWorld.exe

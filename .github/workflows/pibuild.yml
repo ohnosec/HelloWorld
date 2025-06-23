@@ -1,5 +1,8 @@
 name: PIBuild
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -11,21 +14,21 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # - uses: pguyot/arm-runner-action@v2
-    #   with:
-    #     copy_artifact_path: HelloWorld
-    #     cpu: cortex-a53
-    #     cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-    #     base_image: raspi_4_bullseye:20230102
-    #     # cpu_info: raspberrypi_4b
-    #     # base_image: https://raspi.debian.net/tested/20230102_raspi_4_bullseye.img.xz
-    #     # base_image: raspi_4_bullseye:20230102
-    #     commands: |
-    #       make HelloWorld
-    #       ls -a
+    - uses: pguyot/arm-runner-action@v2
+      with:
+        copy_artifact_path: HelloWorld
+        cpu: cortex-a53
+        cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
+        base_image: raspi_4_bullseye:20230102
+        # cpu_info: raspberrypi_4b
+        # base_image: https://raspi.debian.net/tested/20230102_raspi_4_bullseye.img.xz
+        # base_image: raspi_4_bullseye:20230102
+        commands: |
+          make HelloWorld
+          ls -a
 
-    # - name: Upload zip
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: HelloWorld_pi
-    #     path: HelloWorld
+    - name: Upload zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: HelloWorld_pi
+        path: HelloWorld
