@@ -25,20 +25,23 @@ jobs:
       # working-directory: ${{env.GITHUB_WORKSPACE}}
       # run: msbuild /m "/p:Configuration=${{env.BUILD_CONFIGURATION}};Platform=x86;OutDir=output/32bit/" .
 
-    # - name: Make zip 
+    # - name: Make zip
       # run: Compress-Archive "output/*" "output/HelloWorld.windows.zip"
-      
+
     # - name: List files in the repository
       # run: ls -r ${{ github.workspace }}
-    
+
     # - name: Upload zip
       # uses: actions/upload-artifact@v3
       # with:
         # name: HelloWorld.windows.zip
         # path: output/HelloWorld.windows.zip
-        
-    - name: Windows build
-      uses: ./.github/actions/windowsbuild
-      with:
-        solution-name: HelloWorld.sln
-        artifact-name: HelloWorld_windows
+
+    # - name: Windows build
+    #   uses: ./.github/actions/windowsbuild
+    #   with:
+    #     solution-name: HelloWorld.sln
+    #     artifact-name: HelloWorld_windows
+
+    - name: Build
+      run: make
