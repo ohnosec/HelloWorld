@@ -1,0 +1,285 @@
+name: Build and release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  windows64:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+
+      - name: Build and verify
+        shell: pwsh
+        run: |
+          msbuild HelloWorld.sln /m /p:Configuration=Release /p:Platform=x64
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSBuild failed with exit code $LASTEXITCODE"
+          }
+
+          New-Item -ItemType Directory -Force dist/windows64 | Out-Null
+          Copy-Item x64/Release/HelloWorld.exe dist/windows64/HelloWorld-windows64.exe
+
+          $artifact = "dist/windows64/HelloWorld-windows64.exe"
+          $bytes = [IO.File]::ReadAllBytes($artifact)
+          if ($bytes.Length -lt 64) {
+            throw "$artifact is too small to be a valid PE file"
+          }
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length) {
+            throw "$artifact has an invalid PE header offset"
+          }
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($machine -ne 0x8664) {
+            throw ("Expected an AMD64 PE file, found machine type 0x{0:x4}" -f $machine)
+          }
+
+          $output = & ./$artifact
+          if ($LASTEXITCODE -ne 0) {
+            throw "HelloWorld-windows64.exe failed with exit code $LASTEXITCODE"
+          }
+          if ([string]::Join("`n", $output).TrimEnd() -ne "Hello world") {
+            throw "Unexpected program output: $output"
+          }
+
+      - name: Upload Windows x64 artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-windows64
+          path: dist/windows64/HelloWorld-windows64.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  linux64:
+    name: Linux x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Build and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/linux64
+          gcc -std=c17 -O2 -Wall -Wextra -Werror main.c -o dist/linux64/HelloWorld-linux64
+          output="$(./dist/linux64/HelloWorld-linux64)"
+          test "${output}" = "Hello world" || { echo "Unexpected output: ${output}" >&2; exit 1; }
+          file_info="$(file dist/linux64/HelloWorld-linux64)"
+          echo "${file_info}"
+          grep -Eq "ELF 64-bit.*x86-64" <<< "${file_info}"
+
+      - name: Upload Linux x64 artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-linux64
+          path: dist/linux64/HelloWorld-linux64
+          if-no-files-found: error
+          retention-days: 7
+
+  raspberry-pi:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Raspberry Pi 32-bit
+            target: raspberrypi32
+            base_image: raspios_lite:2023-05-03
+            cpu: arm1176
+            file_pattern: "ELF 32-bit.*ARM"
+          - name: Raspberry Pi 64-bit
+            target: raspberrypi64
+            base_image: raspios_lite_arm64:2023-05-03
+            cpu: cortex-a53
+            file_pattern: "ELF 64-bit.*ARM aarch64"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Build and verify inside Raspberry Pi OS
+        uses: pguyot/arm-runner-action@e1773de1ed6eb61848f5693de824d836f0b0ea25 # v2.6.5
+        with:
+          base_image: ${{ matrix.base_image }}
+          cpu: ${{ matrix.cpu }}
+          bind_mount_repository: true
+          shell: /bin/bash -eo pipefail
+          commands: |
+            apt-get -o Acquire::Retries=3 update
+            apt-get -o Acquire::Retries=3 install -y --no-install-recommends file gcc
+            mkdir -p dist/${{ matrix.target }}
+            gcc -std=c17 -O2 -Wall -Wextra -Werror main.c -o dist/${{ matrix.target }}/HelloWorld-${{ matrix.target }}
+            output="$(./dist/${{ matrix.target }}/HelloWorld-${{ matrix.target }})"
+            test "${output}" = "Hello world" || { echo "Unexpected output: ${output}" >&2; exit 1; }
+            file_info="$(file dist/${{ matrix.target }}/HelloWorld-${{ matrix.target }})"
+            echo "${file_info}"
+            grep -Eq "${{ matrix.file_pattern }}" <<< "${file_info}"
+
+      - name: Confirm Raspberry Pi artifact persisted
+        shell: bash
+        run: test -x "dist/${{ matrix.target }}/HelloWorld-${{ matrix.target }}"
+
+      - name: Upload Raspberry Pi artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/${{ matrix.target }}/HelloWorld-${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 7
+
+  dos16:
+    name: DOS 16-bit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install DOSBox-X
+        shell: bash
+        run: |
+          set -euo pipefail
+          dosbox_revision=1502
+          for attempt in 1 2 3; do
+            if sudo snap install dosbox-x --revision="${dosbox_revision}"; then
+              break
+            fi
+            if (( attempt == 3 )); then
+              echo "DOSBox-X installation failed after ${attempt} attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          test "$(snap list dosbox-x | awk 'NR == 2 { print $3 }')" = "${dosbox_revision}"
+
+      - name: Build and run inside DOSBox-X
+        uses: joncloud/dos-build-action@76b53e600a47530c209e5de8344cef9a94c43515 # v1
+        with:
+          run: |
+            C:
+            CD SRC
+            TCC MAIN.C
+            IF ERRORLEVEL 1 EXIT 1
+            MAIN.EXE > RUN.TXT
+            IF ERRORLEVEL 1 EXIT 1
+          programs: |
+            $/turbo-c++/3.00:C:\TC
+            ${{ github.workspace }}:C:\SRC
+          conf: |
+            [dosbox]
+            memsize=16
+
+            [cpu]
+            cycles=max
+            turbo=true
+
+      - name: Verify and stage DOS artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f MAIN.EXE
+          output="$(tr -d '\r' < RUN.TXT)"
+          test "${output}" = "Hello world" || { echo "Unexpected output: ${output}" >&2; exit 1; }
+          file_info="$(file MAIN.EXE)"
+          echo "${file_info}"
+          grep -Eq "MS-DOS executable" <<< "${file_info}"
+          mkdir -p dist/dos16
+          mv MAIN.EXE dist/dos16/HelloWorld-dos16.exe
+
+      - name: Upload DOS 16-bit artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-dos16
+          path: dist/dos16/HelloWorld-dos16.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - windows64
+      - linux64
+      - raspberry-pi
+      - dos16
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Validate assets and generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_assets=(
+            HelloWorld-windows64.exe
+            HelloWorld-linux64
+            HelloWorld-raspberrypi32
+            HelloWorld-raspberrypi64
+            HelloWorld-dos16.exe
+          )
+          for asset in "${expected_assets[@]}"; do
+            if [[ ! -f "release-assets/${asset}" ]]; then
+              echo "Missing release asset: ${asset}" >&2
+              exit 1
+            fi
+          done
+          (
+            cd release-assets
+            sha256sum "${expected_assets[@]}" > SHA256SUMS.txt
+          )
+
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" release-assets/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" release-assets/* \
+              --generate-notes \
+              --title "${GITHUB_REF_NAME}" \
+              --verify-tag
+          fi
